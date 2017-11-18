@@ -16,16 +16,16 @@ SRC_DIR=./src/
 CFLAGSObj=-m32 -c
 CFLAGSExe=-m32 -o
 
-all: lib 
+all: directory lib 
 
-lib: $(BIN_DIR)t2fs.exe
-	ar crs $(LIB_DIR)libt2fs.a $(LIB_DIR)apidisk.o $(SRC_DIR)t2fs.o
+directory:
+	mkdir lib -p -v
 
-t2fs.exe: $(SRC_DIR)t2fs.o
- 	$(CC) $(SRC_DIR)t2fs.o $(CFLAGSExe) $(BIN_DIR)t2fs
+lib: t2fs.o
+	ar crs $(LIB_DIR)libt2fs.a $(LIB_DIR)apidisk.o $(BIN_DIR)t2fs.o
 
-t2fs.o: $(SRC_DIR)t2fs.c $(INC_DIR)apidisk.h
-	$(CC) $(CFLAGSObj) $(SRC_DIR)t2fs.c -Wall
-
+t2fs.o: $(SRC_DIR)t2fs.c $(INC_DIR)apidisk.h $(INC_DIR)t2fs.h
+	$(CC) $(CFLAGSObj) $(SRC_DIR)t2fs.c -Wall -o $(BIN_DIR)t2fs.o  
+ 
 clean:
-	find $(BIN_DIR) $(LIB_DIR) $(SRC_DIR) -type f ! -name 't2fs_disk.dat' ! -name 'apidisk.o' -delete
+	find $(BIN_DIR) $(LIB_DIR) $(SRC_DIR) -type f ! -name 't2fs_disk.dat' ! -name 'apidisk.o' ! -name 't2fs.c' -delete
