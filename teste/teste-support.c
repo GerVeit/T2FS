@@ -52,20 +52,15 @@ int main(int argc, char *argv[]){
 	
 	
 	//	Concatenating bytes (**Note that the type int's size is 4 bytes as printed above
-	
-	unsigned char id[SIZE_OF_INT];
-	
-	printf("oi0\n");
-	
-	strcat(id, bufferRead[0]); 
-	strcat(id, bufferRead[1]); 
-	strcat(id, bufferRead[2]); 
-	strcat(id, bufferRead[3]);
-	
-	printf("oi\n");
 
-	printf("id = %s\n", id);
+	printf("\n\nDissected inforamation:\n\n");
+
+	char id[SIZE_OF_INT+1];
 	
+	for(int loop_control=0; loop_control<SIZE_OF_INT; loop_control++)
+		id[loop_control] = (char)bufferRead[loop_control];
+		
+	printf("id = \t\t\t%s\n", id);
 
 	
 	return SUCCESS;
