@@ -60,8 +60,38 @@ int main(int argc, char *argv[]){
 	for(int loop_control=0; loop_control<SIZE_OF_INT; loop_control++)
 		id[loop_control] = (char)bufferRead[loop_control];
 		
-	printf("id = \t\t\t%s\n", id);
+	printf("id: \t\t\t%s\n", id);
 
+	unsigned int version = bufferRead[5]*256+bufferRead[4];
+
+	printf("Version: \t\t0x%.4x\t(0x7e1 = 2017; 2 = 2 Semestre)\n", version);
+
+	unsigned int SuperBlockSize = (bufferRead[6]*256+bufferRead[7])/256;
+
+	printf ("SuperBlockSize: \t%d Setores Logicos\n", SuperBlockSize);
+
+	unsigned int DiskSize = (bufferRead[8]+bufferRead[9]*256+bufferRead[10]*65536+bufferRead[11]*16777216);
+
+	printf ("DiskSize: \t\t%d bytes\n", DiskSize);
+
+	unsigned int NofSectors = (bufferRead[12]+bufferRead[13]*256+bufferRead[14]*65536+bufferRead[15]*16777216);
+
+	printf ("NofSectors: \t\t%d Setores Logicos\n", NofSectors);
+
+	unsigned int SectorsPerCluster = (bufferRead[16]+bufferRead[17]*256+bufferRead[18]*65536+bufferRead[19]*16777216);
+
+	printf ("SectorsPerCluster: \t%d Setores Logicos\n", SectorsPerCluster);
 	
+	unsigned int pFATSectorStart = (bufferRead[20]+bufferRead[21]*256+bufferRead[22]*65536+bufferRead[23]*16777216);
+
+	printf ("pFATSectorStart: \t%d\n", pFATSectorStart);
+
+	unsigned int RootDirCluster = (bufferRead[24]+bufferRead[25]*256+bufferRead[26]*65536+bufferRead[27]*16777216);
+
+	printf ("RootDirCluster: \t%d\n", RootDirCluster);
+
+	unsigned int DataSectorStart = (bufferRead[28]+bufferRead[29]*256+bufferRead[30]*65536+bufferRead[31]*16777216);
+
+	printf ("DataSectorStart: \t%d\n", DataSectorStart);
 	return SUCCESS;
 }
