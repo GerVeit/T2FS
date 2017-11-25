@@ -17,13 +17,13 @@ SRC_DIR=../src/
 CFLAGSObj=-m32 -c
 CFLAGSExe=-m32 -o
 
-all: identify teste-support
+all: identify diskDissection
 
 identify:
 	$(CC) $(CFLAGSExe) $(BIN_DIR)identify identify.c -L$(LIB_DIR) $(LIB) 
 
-teste-support:
-	$(CC) $(CFLAGSExe) $(BIN_DIR)teste-support teste-support.c -L$(LIB_DIR) $(LIB)
+diskDissection:
+	$(CC) $(CFLAGSExe) $(BIN_DIR)diskDissection diskDissection.c -L$(LIB_DIR) $(LIB)
 
 clean:
 	find $(BIN_DIR) -type f ! -name 't2fs_disk.dat' ! -name 't2fs.o' -delete
