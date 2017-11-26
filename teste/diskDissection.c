@@ -56,14 +56,15 @@ int main(int argc, char *argv[]){
 	printf("\n\nDissected inforamation:\n\n");
 
 	char id[SIZE_OF_INT+1];
-	
-	for(int loop_control=0; loop_control<SIZE_OF_INT; loop_control++)
+
+	printf("id: \t\t\t");
+	for(int loop_control=0; loop_control<SIZE_OF_INT; loop_control++){
 		id[loop_control] = (char)bufferRead[loop_control];
-		
-	printf("id: \t\t\t%s\n", id); //ta meio zoada mas eh nois
+		printf("%c", id[loop_control]);
+	}	
 
 	unsigned int version = bufferRead[5]*256+bufferRead[4];
-	printf("Version: \t\t0x%.4x\t(0x7e1 = 2017; 2 = 2 Semestre)\n", version);
+	printf("\nVersion: \t\t0x%.4x\t(0x7e1 = 2017; 2 = 2 Semestre)\n", version);
 
 	unsigned int SuperBlockSize = (bufferRead[6]*256+bufferRead[7])/256;
 	printf ("SuperBlockSize: \t%d Setores Logicos\n", SuperBlockSize);
@@ -90,10 +91,20 @@ int main(int argc, char *argv[]){
 	
 	printf("\n->->->Readind FAT Data<-<-<-\n");
 
-	unsigned int Size_of_Element = 4;  //according to specification (in bytes) 
-	unsigned int FATsize = DataSectorStart - pFATSectorStart;
-	unsigned int NumberOfElements = (FATsize*SECTOR_SIZE)/Size_of_Element;
+	unsigned int Size_of_Element = 4;  					//according to specification (in bytes) correspond to 1 cluster
+	unsigned int FATsize = DataSectorStart - pFATSectorStart; 		//number of logic sectors
+	unsigned int NumberOfElements = (FATsize*SECTOR_SIZE)/Size_of_Element; 	//notice that 1 cluster has 4 logic sectors
+	
+	/*
+						 Important!!!
 
+		->->Every byte read in every FAT's logic sector correspond to one logic sector in the
+		data area (starts in cluster 0, right after the end of FAT area). Knowing that, notice
+		that the number of logic sectors in data's area is 32768 (FAT size * Sector Size), so
+		the number of clusters is this amount divided by 4 (1 cluster contains 4 logic sectors)
+		that is equal to 8192.
+	*/
+		
 	printf("\n->Number of FAT's logic sectors: %d\n", FATsize);
 	printf("\n->Size of an element in array: %d\n", Size_of_Element);
 	printf("\n->Number of FAT's array elements: %d\n", NumberOfElements);
@@ -103,6 +114,8 @@ int main(int argc, char *argv[]){
 
 	unsigned int  currentElement = 0, currentSectorPosition = 0, i = 0; //i => mask to currentSectorPosition
 	
+
+	printf("\n\n");
 	for(unsigned int currentSector = pFATSectorStart; currentSector <= FATsize; currentSector++){
 	
 		if(read_sector(currentSector, FATbuffer) != 0){
@@ -110,26 +123,22 @@ int main(int argc, char *argv[]){
 			return ERROR;
 		}
 
-		//storing in array 
+		//storing and printing in array 
 		while (currentSectorPosition < SECTOR_SIZE){
 			
 			i = currentSectorPosition;
 
 			FATarray[currentElement] = (FATbuffer[i]+FATbuffer[i++]*256+FATbuffer[i++]*65536+FATbuffer[i++]*16777216);
+
+			printf("%.4x[%.4x]\t", FATarray[currentElement], currentElement);	//printing in hexa decimal
 			currentElement++;currentSectorPosition = i; currentSectorPosition++;
 
 		}currentSectorPosition = 0;
 	}
 	
-	//printing FAT	
-	printf("\n->Size of FAT array = %d elements of 4 bytes\n\n", (sizeof(FATarray)/Size_of_Element)); 
-								//must be equal to 8192, same number of clusters
-
-	for(unsigned int FATcounter = 0; FATcounter<(sizeof(FATarray)/Size_of_Element); FATcounter++)
-		printf("\t%u[%d]", FATarray[FATcounter], FATcounter);
-
-	printf("\n\n->->->End of FAT<-<-<-\n");
-
-
+	//Remind that array's elements are unsigned int and that its size is 4 bytes 
+	printf("\n\n->Array size = %d bytes or %d elements\n", sizeof(FATarray), (sizeof(FATarray)/Size_of_Element));	
+	printf("\n->->->End of FAT<-<-<-\n\n");
+	
 	return SUCCESS;
 }
