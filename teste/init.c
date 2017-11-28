@@ -11,5 +11,4 @@
 
 int main(int argc, char *argv[]){
     init();
-    create2();
 }

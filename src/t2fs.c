@@ -12,21 +12,75 @@
 #define TYPEVAL_REGULAR     0x01
 #define TYPEVAL_DIRETORIO   0x02
 
-int firstexec = 0;	
+int firstexec = 0;
+unsigned int FATarray_global[8192];
+struct t2fs_superbloco *data_superbloco;//Struct para informacoes lidas do superbloco
 
-/*Funcao de inicializacao e leitura dos dados, populando a struct do superbloco*/
+/*Funcao de inicializacao e leitura dos dados, populando a struct do superbloco e o array da FAT*/
 int init(){
-
-	struct t2fs_superbloco *data_superbloco;
 	
 	printf("Esta merda de trabalho (init)\n");
+	read_superbloco();
+	read_FAT();
+	return SUCCESS;
+}
+
+int read_FAT(){
+	
+	/********Lendo a FAT*********/
+
+	printf("\n->->->Readind FAT Data<-<-<-\n");
+
+	unsigned int FATsize = data_superbloco->DataSectorStart - data_superbloco->pFATSectorStart; //number of logic sectors
+	unsigned int NumberOfElements = (FATsize*SECTOR_SIZE)/Size_of_Element; 	//notice that 1 cluster has 4 logic sectors	
+	unsigned int currentElement = 0, currentSectorPosition = 0, i = 0; //i => mask to currentSectorPosition
+	unsigned int FATarray[NumberOfElements];
+	unsigned char FATbuffer[SECTOR_SIZE];
+	int cont;
+	
+	printf("\n->Number of FAT's logic sectors: %d\n", FATsize);
+	printf("\n->Size of an element in array: %d\n", Size_of_Element);
+	printf("\n->Number of FAT's array elements: %d\n", NumberOfElements);
+	printf("\n\n");
+	
+	for(unsigned int currentSector = data_superbloco->pFATSectorStart; currentSector <= FATsize; currentSector++){
+	
+		if(read_sector(currentSector, FATbuffer) != 0){
+			printf("Erro ao ler setor da fat!\n");
+			return ERROR;
+		}
+
+		//storing and printing in array 
+		while (currentSectorPosition < SECTOR_SIZE){
+			
+			i = currentSectorPosition;
+
+			FATarray[currentElement] = (FATbuffer[i]+FATbuffer[i++]*256+FATbuffer[i++]*65536+FATbuffer[i++]*16777216);
+
+			printf("%.4x[%.4x]\t", FATarray[currentElement], currentElement);	//printing in hexa decimal
+			currentElement++;currentSectorPosition = i; currentSectorPosition++;
+
+		}currentSectorPosition = 0;
+	}
+	
+	//Remind that array's elements are unsigned int and that its size is 4 bytes 
+	printf("\n\n->Array size = %d bytes or %d elements\n", sizeof(FATarray), (sizeof(FATarray)/Size_of_Element));	
+	
+	//Populando u array global com as informacoes da FAT
+	for(cont=0; cont<=NumberOfElements; cont++){
+		FATarray_global[cont] = FATarray[cont];
+	}
+
+	return SUCCESS;
+	/*********Fim da leitura da FAT*********/
+}
+
+int read_superbloco(){
 
 	/**********Lendo o Superbloco**********/
-
-	data_superbloco = (struct t2fs_superbloco*)malloc(sizeof(struct t2fs_superbloco));
 	
+	data_superbloco = (struct t2fs_superbloco*)malloc(sizeof(struct t2fs_superbloco));
 	unsigned char bufferRead[SECTOR_SIZE];
-
 	unsigned int superblock_sector = 0x00000000;
 	
 	if (read_sector(superblock_sector, bufferRead) != 0){
@@ -70,54 +124,13 @@ int init(){
 
 	data_superbloco->DataSectorStart = (bufferRead[28]+bufferRead[29]*256+bufferRead[30]*65536+bufferRead[31]*16777216);
 	printf ("DataSectorStart: \t%d\n", data_superbloco->DataSectorStart);
-	
-	/********Fim da leitura do Superbloco*/
-	
-	/********Lendo a FAT*********/
 
-	printf("\n->->->Readind FAT Data<-<-<-\n");
-
-	unsigned int FATsize = data_superbloco->DataSectorStart - data_superbloco->pFATSectorStart; //number of logic sectors
-	FATsize_uni = FATsize;
-	printf("\n->Number of FAT's logic sectors: %d\n", FATsize);
-	printf("\n->Size of an element in array: %d\n", Size_of_Element);
-	printf("\n->Number of FAT's array elements: %d\n", NumberOfElements);
-
-	unsigned char FATbuffer[SECTOR_SIZE];	
-	unsigned int currentElement = 0, currentSectorPosition = 0, i = 0; //i => mask to currentSectorPosition
-	unsigned int FATsize;
-	unsigned int NumberOfElements = (FATsize*SECTOR_SIZE)/Size_of_Element; 	//notice that 1 cluster has 4 logic sectors
-	unsigned int FATarray[NumberOfElements];
-	
-	printf("\n\n");
-	for(unsigned int currentSector = data_superbloco->pFATSectorStart; currentSector <= FATsize; currentSector++){
-	
-		if(read_sector(currentSector, FATbuffer) != 0){
-			printf("Erro ao ler setor da fat!\n");
-			return ERROR;
-		}
-
-		//storing and printing in array 
-		while (currentSectorPosition < SECTOR_SIZE){
-			
-			i = currentSectorPosition;
-
-			FATarray[currentElement] = (FATbuffer[i]+FATbuffer[i++]*256+FATbuffer[i++]*65536+FATbuffer[i++]*16777216);
-
-			printf("%.4x[%.4x]\t", FATarray[currentElement], currentElement);	//printing in hexa decimal
-			currentElement++;currentSectorPosition = i; currentSectorPosition++;
-
-		}currentSectorPosition = 0;
-	}
-	
-	//Remind that array's elements are unsigned int and that its size is 4 bytes 
-	printf("\n\n->Array size = %d bytes or %d elements\n", sizeof(FATarray), (sizeof(FATarray)/Size_of_Element));	
-	
-	/*********Fim da leitura da FAT*********/
 	return SUCCESS;
+
+	/********Fim da leitura do Superbloco*/
 }
 
-int getFreeEntry(){
+/*int getFreeEntry(){
 	int i;
 	for(i=0; i<8192; i++){
 		if(FATarray[i]==0){
@@ -128,10 +141,10 @@ int getFreeEntry(){
 	return ERROR;
 }
 
-/*int ConvertToRelative(char *pathname, char *filename){
+int ConvertToRelative(char *pathname, char *filename){
 
 	return SUCCESS;
-}*/
+}
 
 FILE2 create2(char *filename){
 	if(firstexec == 0){
@@ -154,7 +167,7 @@ FILE2 create2(char *filename){
 	//memcpy(record.name, pathname, strlen(pathname)*sizeof(char));
 	//record.bytesFileSize = 0;
 	//record.firstCluster = free_entry;
-}
+}*/
 
 
 int identify2 (char *name, int size){
