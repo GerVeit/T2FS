@@ -7,6 +7,11 @@
 #define ERROR -1
 #define SUCCESS 0
 #define SIZE_OF_INT 4
+#define TYPEVAL_INVALIDO    0x00
+#define TYPEVAL_REGULAR     0x01
+#define TYPEVAL_DIRETORIO   0x02
+
+int firstexec = 0;
 
 /*Funcao de inicializacao e leitura dos dados, populando a struct do superbloco*/
 void init(){
@@ -28,8 +33,8 @@ void init(){
 		return ERROR;
 	}
 
-	for(int buff_cont = 0; buff_cont<sizeof(bufferRead); buff_cont++)
-		printf("buffer[%d] = %u\n",buff_cont, (unsigned char)bufferRead[buff_cont]); 	
+	//for(int buff_cont = 0; buff_cont<sizeof(bufferRead); buff_cont++)
+	//	printf("buffer[%d] = %u\n",buff_cont, (unsigned char)bufferRead[buff_cont]); 	
 	
 	printf("\n\nDissected inforamation:\n\n");
 
@@ -108,30 +113,39 @@ void init(){
 	printf("\n\n->Array size = %d bytes or %d elements\n", sizeof(FATarray), (sizeof(FATarray)/Size_of_Element));	
 	
 	/*********Fim da leitura da FAT*********/
+	return SUCCESS;
 }
 
-
-/*
-FILE create2(char *filename){
-	if(primeira_vez){
-			if(init() != 0)
-		
+int getFreeEntry(){
+	int i;
+	for(i=0; i<8192; i++){
+		if(FATarray[i]==0){
+			printf("Achou espaco livre \n");
+			return i;
+		}
 	}
-	struct t2fs_record record = {0};
-	record.TypeVal = 0x01;
+	return ERROR;
+}
+
+FILE create2(char *filename){
+	if(firstexec = 1){
+			if(init() == ERROR){
+				return ERROR;
+			}
+	}
+	struct t2fs_record record;
+
+	int free_entry = getFreeEntry();
+
+	record.TypeVal = TYPEVAL_REGULAR;
 	memcpy(record.name, name_parsed, strlen(nome_parsed)*sizeof(char));
 	record.blocksFileSize = 0;
 	record.bytesFileSize = 0;
-}*/
-
-
-
-
+	record.firstCluster = free_entry;
+}
 
 
 int identify2 (char *name, int size){
-	
-
 	  strcpy(name, "Geronimo Veit\t260004\nJulia Rittmann\t262512\nVilmar Fonseca\t262519\n");
 
 	  if (sizeof(name)<0 || sizeof(name)>size)
