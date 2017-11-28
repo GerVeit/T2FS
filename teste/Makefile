@@ -17,7 +17,10 @@ SRC_DIR=../src/
 CFLAGSObj=-m32 -c
 CFLAGSExe=-m32 -o
 
-all: identify diskDissection
+all: init identify diskDissection
+
+init:
+	$(CC) $(CFLAGSExe) $(BIN_DIR)init init.c -L$(LIB_DIR) $(LIB)
 
 identify:
 	$(CC) $(CFLAGSExe) $(BIN_DIR)identify identify.c -L$(LIB_DIR) $(LIB) 
