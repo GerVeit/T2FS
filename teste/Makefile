@@ -17,7 +17,10 @@ SRC_DIR=../src/
 CFLAGSObj=-m32 -c
 CFLAGSExe=-m32 -o
 
-all: init identify diskDissection
+all: create init identify diskDissection
+
+create:
+	$(CC) $(CFLAGSExe) $(BIN_DIR)create create.c -L$(LIB_DIR) $(LIB)
 
 init:
 	$(CC) $(CFLAGSExe) $(BIN_DIR)init init.c -L$(LIB_DIR) $(LIB)

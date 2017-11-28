@@ -13,7 +13,7 @@
 #define TYPEVAL_DIRETORIO   0x02
 
 int firstexec = 0;
-unsigned int FATarray_global[8192];
+unsigned int FATarray_global[8192];//Array com as informacoes lidas da FAT
 struct t2fs_superbloco *data_superbloco;//Struct para informacoes lidas do superbloco
 
 /*Funcao de inicializacao e leitura dos dados, populando a struct do superbloco e o array da FAT*/
@@ -130,10 +130,10 @@ int read_superbloco(){
 	/********Fim da leitura do Superbloco*/
 }
 
-/*int getFreeEntry(){
+int getFreeEntry(){
 	int i;
 	for(i=0; i<8192; i++){
-		if(FATarray[i]==0){
+		if(FATarray_global[i]==0){
 			printf("Achou espaco livre \n");
 			return i;
 		}
@@ -161,13 +161,13 @@ FILE2 create2(char *filename){
 	//ConvertToRelative();
 
  	int free_entry = getFreeEntry();
-	FATarray[free_entry] = 0xffffffff;
+	FATarray_global[free_entry] = 0xffffffff;
 
 	//record.TypeVal = TYPEVAL_REGULAR;
 	//memcpy(record.name, pathname, strlen(pathname)*sizeof(char));
 	//record.bytesFileSize = 0;
 	//record.firstCluster = free_entry;
-}*/
+}
 
 
 int identify2 (char *name, int size){
