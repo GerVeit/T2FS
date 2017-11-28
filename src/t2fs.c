@@ -7,14 +7,15 @@
 #define ERROR -1
 #define SUCCESS 0
 #define SIZE_OF_INT 4
+#define Size_of_Element 4
 #define TYPEVAL_INVALIDO    0x00
 #define TYPEVAL_REGULAR     0x01
 #define TYPEVAL_DIRETORIO   0x02
 
-int firstexec = 0;
+int firstexec = 0;	
 
 /*Funcao de inicializacao e leitura dos dados, populando a struct do superbloco*/
-void init(){
+int init(){
 
 	struct t2fs_superbloco *data_superbloco;
 	
@@ -75,18 +76,18 @@ void init(){
 	/********Lendo a FAT*********/
 
 	printf("\n->->->Readind FAT Data<-<-<-\n");
-	
-	unsigned int Size_of_Element = 4;  					//according to specification (in bytes) correspond to 1 cluster
-	unsigned int FATsize = data_superbloco->DataSectorStart - data_superbloco->pFATSectorStart; 		//number of logic sectors
-	unsigned int NumberOfElements = (FATsize*SECTOR_SIZE)/Size_of_Element; 	//notice that 1 cluster has 4 logic sectors
-	
+
+	unsigned int FATsize = data_superbloco->DataSectorStart - data_superbloco->pFATSectorStart; //number of logic sectors
+	FATsize_uni = FATsize;
 	printf("\n->Number of FAT's logic sectors: %d\n", FATsize);
 	printf("\n->Size of an element in array: %d\n", Size_of_Element);
 	printf("\n->Number of FAT's array elements: %d\n", NumberOfElements);
 
-	unsigned char FATbuffer[SECTOR_SIZE];		
-	unsigned int  FATarray[NumberOfElements];
-	unsigned int  currentElement = 0, currentSectorPosition = 0, i = 0; //i => mask to currentSectorPosition
+	unsigned char FATbuffer[SECTOR_SIZE];	
+	unsigned int currentElement = 0, currentSectorPosition = 0, i = 0; //i => mask to currentSectorPosition
+	unsigned int FATsize;
+	unsigned int NumberOfElements = (FATsize*SECTOR_SIZE)/Size_of_Element; 	//notice that 1 cluster has 4 logic sectors
+	unsigned int FATarray[NumberOfElements];
 	
 	printf("\n\n");
 	for(unsigned int currentSector = data_superbloco->pFATSectorStart; currentSector <= FATsize; currentSector++){
@@ -127,21 +128,32 @@ int getFreeEntry(){
 	return ERROR;
 }
 
-FILE create2(char *filename){
-	if(firstexec = 1){
-			if(init() == ERROR){
-				return ERROR;
-			}
+/*int ConvertToRelative(char *pathname, char *filename){
+
+	return SUCCESS;
+}*/
+
+FILE2 create2(char *filename){
+	if(firstexec == 0){
+		if(init() == ERROR){
+			return ERROR;
+		}
+		firstexec = 1;
 	}
+
 	struct t2fs_record record;
+	struct t2fs_record record_pai;
+	//char* pathname = (char*) malloc(sizeof(strlen(filename)));
 
-	int free_entry = getFreeEntry();
+	//ConvertToRelative();
 
-	record.TypeVal = TYPEVAL_REGULAR;
-	memcpy(record.name, name_parsed, strlen(nome_parsed)*sizeof(char));
-	record.blocksFileSize = 0;
-	record.bytesFileSize = 0;
-	record.firstCluster = free_entry;
+ 	int free_entry = getFreeEntry();
+	FATarray[free_entry] = 0xffffffff;
+
+	//record.TypeVal = TYPEVAL_REGULAR;
+	//memcpy(record.name, pathname, strlen(pathname)*sizeof(char));
+	//record.bytesFileSize = 0;
+	//record.firstCluster = free_entry;
 }
 
 
