@@ -8,17 +8,24 @@
 #define SUCCESS 0
 #define SIZE_OF_INT 4
 #define Size_of_Element 4
+#define NAME_SIZE 55
+#define DIRMAX 16
 #define TYPEVAL_INVALIDO    0x00
 #define TYPEVAL_REGULAR     0x01
 #define TYPEVAL_DIRETORIO   0x02
+
 
 int firstexec = 0;
 unsigned int FATarray_global[8192];//Array com as informacoes lidas da FAT
 struct t2fs_superbloco *data_superbloco;//Struct para informacoes lidas do superbloco
 
+//matriz de strings
+char parsedPath[DIRMAX][SIZEMAX];
+int sizeOfPath = 0;
+
 /*Funcao de inicializacao e leitura dos dados, populando a struct do superbloco e o array da FAT*/
 int init(){
-	
+
 	printf("Esta merda de trabalho (init)\n");
 	read_superbloco();
 	read_FAT();
@@ -26,33 +33,33 @@ int init(){
 }
 
 int read_FAT(){
-	
+
 	/********Lendo a FAT*********/
 
 	printf("\n->->->Readind FAT Data<-<-<-\n");
 
 	unsigned int FATsize = data_superbloco->DataSectorStart - data_superbloco->pFATSectorStart; //number of logic sectors
-	unsigned int NumberOfElements = (FATsize*SECTOR_SIZE)/Size_of_Element; 	//notice that 1 cluster has 4 logic sectors	
+	unsigned int NumberOfElements = (FATsize*SECTOR_SIZE)/Size_of_Element; 	//notice that 1 cluster has 4 logic sectors
 	unsigned int currentElement = 0, currentSectorPosition = 0, i = 0; //i => mask to currentSectorPosition
 	unsigned int FATarray[NumberOfElements];
 	unsigned char FATbuffer[SECTOR_SIZE];
 	int cont;
-	
+
 	printf("\n->Number of FAT's logic sectors: %d\n", FATsize);
 	printf("\n->Size of an element in array: %d\n", Size_of_Element);
 	printf("\n->Number of FAT's array elements: %d\n", NumberOfElements);
 	printf("\n\n");
-	
+
 	for(unsigned int currentSector = data_superbloco->pFATSectorStart; currentSector <= FATsize; currentSector++){
-	
+
 		if(read_sector(currentSector, FATbuffer) != 0){
 			printf("Erro ao ler setor da fat!\n");
 			return ERROR;
 		}
 
-		//storing and printing in array 
+		//storing and printing in array
 		while (currentSectorPosition < SECTOR_SIZE){
-			
+
 			i = currentSectorPosition;
 
 			FATarray[currentElement] = (FATbuffer[i]+FATbuffer[i++]*256+FATbuffer[i++]*65536+FATbuffer[i++]*16777216);
@@ -62,10 +69,10 @@ int read_FAT(){
 
 		}currentSectorPosition = 0;
 	}
-	
-	//Remind that array's elements are unsigned int and that its size is 4 bytes 
-	printf("\n\n->Array size = %d bytes or %d elements\n", sizeof(FATarray), (sizeof(FATarray)/Size_of_Element));	
-	
+
+	//Remind that array's elements are unsigned int and that its size is 4 bytes
+	printf("\n\n->Array size = %d bytes or %d elements\n", sizeof(FATarray), (sizeof(FATarray)/Size_of_Element));
+
 	//Populando u array global com as informacoes da FAT
 	for(cont=0; cont<=NumberOfElements; cont++){
 		FATarray_global[cont] = FATarray[cont];
@@ -78,19 +85,19 @@ int read_FAT(){
 int read_superbloco(){
 
 	/**********Lendo o Superbloco**********/
-	
+
 	data_superbloco = (struct t2fs_superbloco*)malloc(sizeof(struct t2fs_superbloco));
 	unsigned char bufferRead[SECTOR_SIZE];
 	unsigned int superblock_sector = 0x00000000;
-	
+
 	if (read_sector(superblock_sector, bufferRead) != 0){
 		printf("Erro ao ler setor\n");
 		return ERROR;
 	}
 
 	//for(int buff_cont = 0; buff_cont<sizeof(bufferRead); buff_cont++)
-	//	printf("buffer[%d] = %u\n",buff_cont, (unsigned char)bufferRead[buff_cont]); 	
-	
+	//	printf("buffer[%d] = %u\n",buff_cont, (unsigned char)bufferRead[buff_cont]);
+
 	printf("\n\nDissected inforamation:\n\n");
 
 	char id[SIZE_OF_INT+1];
@@ -115,7 +122,7 @@ int read_superbloco(){
 
 	data_superbloco->SectorsPerCluster = (bufferRead[16]+bufferRead[17]*256+bufferRead[18]*65536+bufferRead[19]*16777216);
 	printf ("SectorsPerCluster: \t%d Setores Logicos\n", data_superbloco->SectorsPerCluster);
-	
+
 	data_superbloco->pFATSectorStart = (bufferRead[20]+bufferRead[21]*256+bufferRead[22]*65536+bufferRead[23]*16777216);
 	printf ("pFATSectorStart: \t%d\n", data_superbloco->pFATSectorStart);
 
@@ -130,6 +137,55 @@ int read_superbloco(){
 	/********Fim da leitura do Superbloco*/
 }
 
+void breakIn(char *name){
+
+    const char s[2] = "/";
+    char *token;
+
+    token = strtok(name, s);
+
+    while (token != NULL){
+
+        strcpy(parsedPath[sizeOfPath], token);
+        puts(parsedPath[sizeOfPath]);
+
+        sizeOfPath++;
+        token = strtok(NULL, s);
+    }
+    printf("size = %d", sizeOfPath);
+    printf("\n\tNULL reached!!\n");
+
+    sizeOfPath = 0;
+}
+
+void handleAbs(){
+
+}
+
+void handleRel(){
+
+
+}
+
+
+void getType(char *name){
+
+    breakIn(name);
+
+    if(name[0] == '/'){
+        printf("is absolute\n\n");
+        handleAbs(name);
+    }
+
+    else if(name != NULL && sizeOfPath !=0){
+        printf("is relative\n\n");
+        handleRel(name);
+    }
+    else
+        printf("\n\n->->Given name is NULL\n\n");
+}
+
+
 int getFreeEntry(){
 	int i;
 	for(i=0; i<8192; i++){
@@ -141,9 +197,18 @@ int getFreeEntry(){
 	return ERROR;
 }
 
-int ConvertToRelative(char *pathname, char *filename){
+//funcao que completa com /0 os bytes não utilizados do nome
+void completeFileName(char *name){
+    int i=0, cont;   //controllers to fill 55 chars
+    char superName[NAME_SIZE];
 
-	return SUCCESS;
+    while(name[i] != '\0'){
+        superName[i] = name[i];i++;
+    }
+    for (cont = i; cont<NAME_SIZE; cont++)
+        superName[cont] = '\0';
+
+		strcpy(name, superName);
 }
 
 FILE2 create2(char *filename){
@@ -163,10 +228,12 @@ FILE2 create2(char *filename){
  	int free_entry = getFreeEntry();
 	FATarray_global[free_entry] = 0xffffffff;
 
-	//record.TypeVal = TYPEVAL_REGULAR;
-	//memcpy(record.name, pathname, strlen(pathname)*sizeof(char));
-	//record.bytesFileSize = 0;
-	//record.firstCluster = free_entry;
+	completeFileName(filename);
+
+	record.TypeVal = TYPEVAL_REGULAR;
+	strcpy(record.name, filename);
+	record.bytesFileSize = 0;
+	record.firstCluster = free_entry;
 }
 
 
