@@ -261,6 +261,27 @@ void getType(char *name){
 		printf("\n\n->->Given name is NULL\n\n");
 }
 
+int write_FAT(){
+	unsigned int currentElement = 0, currentSectorPOsition = 0, currentSector = 0, i = 0;
+	unsigned char FATbuffer[SECTOR_SIZE];
+
+	for(currentSector = 1; currentSector <=128; currentSector++){
+		currentSectorPosition = 0;
+		while(currentSectorPosition < SECTOR_SIZE){
+			i = currentSectorPosition;
+			//memcpy(FATbuffer,FATarray_global,4)
+			FATbuffer[currentElement] = FATarray_global[i];//(FATarray_global[i++]/256)-(FATarray_global[i++]/65536))
+			currentElement++;
+			currentSectorPosition++;
+		}
+		if(write_sector(currentSector, FATbuffer) != 0){
+			printf("Erro ao grvar FAT!\n");
+			return ERROR;
+		}
+	}
+	return SUCCESS;
+}
+
 //Finds a free entry ins FAT's array
 int getFreeEntry(){
 	int i;
