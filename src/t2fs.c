@@ -275,7 +275,7 @@ int write_FAT(){
 			currentSectorPosition++;
 		}
 		if(write_sector(currentSector, FATbuffer) != 0){
-			printf("Erro ao grvar FAT!\n");
+			printf("Error in write FAT!\n");
 			return ERROR;
 		}
 	}
