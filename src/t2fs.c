@@ -30,7 +30,7 @@ struct t2fs_record list_of_records[DIRMAX]; //Max number of directories in a clu
 
 int init(){
 
-	if (read_superbloco() == SUCCES && read_FAT() == SUCCES)
+	if (read_superbloco() == SUCCESS && read_FAT() == SUCCESS)
 		return SUCCESS;
 	else
 		return ERROR;
@@ -172,6 +172,7 @@ int writeRecord(char *filename, unsigned int cluster){
 	unsigned char buffer[SECTOR_SIZE];
 
 	int ac=0;	//acumulator	
+	int cont=0;
 
 	firstSector = data_superbloco->DataSectorStart + ((cluster - 1)*4);
 
@@ -180,9 +181,10 @@ int writeRecord(char *filename, unsigned int cluster){
 
 	//verify if there is 64 consecutive bytes to write a record	
 	else{	
-		while(buffer[cont] == 0)
+		while(buffer[cont] == 0){
 			ac++;
-		if(ac >= RECORD_SIZE)
+		}	
+		//if(ac >= RECORD_SIZE)
 			//write2 		
 	}
 }
@@ -203,6 +205,7 @@ int writeRecord(char *filename, unsigned int cluster){
 	7) When in directory father, include a record with "t2fs.c" infos by allocation
 */
 
+/* Not tested yet.
 void handleAbs(char *filename){
 	
 	struct t2fs_record *newRecord;
@@ -237,11 +240,12 @@ void handleAbs(char *filename){
 		printf("Error in write record\n");break;
 	}
 }
+*/
 
-void handleRel(){
-
-
+/*
+void handleRel(){	//Pending.
 }
+*/
 
 //Gets relative or absolute filename
 void getType(char *name){
@@ -250,7 +254,7 @@ void getType(char *name){
 
 	if(name[0] == '/'){
 		printf("is absolute\n\n");
-		handleAbs(name);
+		//handleAbs(name); //Pending
 	}
 
 	else if(name != NULL && sizeOfPath !=0){
@@ -262,15 +266,17 @@ void getType(char *name){
 }
 
 int write_FAT(){
-	unsigned int currentElement = 0, currentSectorPOsition = 0, currentSector = 0, i = 0;
+	unsigned int currentElement = 0, currentSectorPosition = 0, currentSector = 0, i = 0;
 	unsigned char FATbuffer[SECTOR_SIZE];
 
 	for(currentSector = 1; currentSector <=128; currentSector++){
 		currentSectorPosition = 0;
 		while(currentSectorPosition < SECTOR_SIZE){
 			i = currentSectorPosition;
-			//memcpy(FATbuffer,FATarray_global,4)
 			FATbuffer[currentElement] = FATarray_global[i];//(FATarray_global[i++]/256)-(FATarray_global[i++]/65536))
+			FATbuffer[currentElement] = FATarray_global[i+1]/256;
+			FATbuffer[currentElement] = FATarray_global[i+2]/65536;
+			FATbuffer[currentElement] = FATarray_global[i+3]/16777216;
 			currentElement++;
 			currentSectorPosition++;
 		}
@@ -322,13 +328,16 @@ FILE2 create2(char *filename){
  	int free_entry = getFreeEntry();
 	FATarray_global[free_entry] = 0xffffffff;
 
+	/*
 	completeFileName(filename);
 	getType(filename);	
-
 	record.TypeVal = TYPEVAL_REGULAR;
 	strcpy(record.name, filename);
 	record.bytesFileSize = 0;
 	record.firstCluster = free_entry;
+	*/
+
+	write_FAT();
 }
 
 

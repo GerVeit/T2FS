@@ -10,6 +10,6 @@
 #define SUCCESS 0
 
 int main(int argc, char *argv[]){
-    char filename;
+    char *filename;
     create2(filename);
 }
