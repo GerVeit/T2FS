@@ -324,11 +324,11 @@ FILE2 create2(char *filename){
 	struct t2fs_record record;
 
  	int free_entry = getFreeEntry();
-	FATarray_global[free_entry] = 0xaaaaaaaa;
+	FATarray_global[free_entry] = 0xffffffff;
 
-	for(int cont=0; cont<8192; cont++){
-		printf("*%.4x[%.4x]*\t", FATarray_global[cont], cont);
-	}
+	//for(int cont=0; cont<8192; cont++){
+	//	printf("*%.4x[%.4x]*\t", FATarray_global[cont], cont);
+	//}
 
 	/*Missing filename parse.
 	
@@ -343,6 +343,93 @@ FILE2 create2(char *filename){
 	write_FAT();
 }
 
+
+int write2(FILE2 handle, char *buffer, int size){
+    unsigned int CLUSTER_SIZE = 1024;
+    unsigned int i, q, pontBuffer=0, numClusters;
+    unsigned int numSetores, setorCluster;
+    unsigned char bufferaux[CLUSTER_SIZE+1];
+    
+    setorCluster= 131+(handle-1)*4;
+
+    if(size>CLUSTER_SIZE){
+        printf("\nNAO CABE EM UM SO CLUSTER\n");
+        
+        numClusters=size/CLUSTER_SIZE;      //CONTA NUMERO DE CLUSTERS NECESSARIOS
+
+        if(size%CLUSTER_SIZE!=0)
+            numClusters++;
+        
+        //buscar cluster livre
+                            
+        numSetores=size/SECTOR_SIZE;        //CONTA NUMERO TOTAL DE SETORES
+
+        if(size%SECTOR_SIZE != 0)
+            numSetores++;
+
+
+
+        for(i=0; i<numClusters; i++){       //PERCORRE CLUSTER A CLUSTER
+
+            pontBuffer=pontBuffer*i;
+            
+            for(q=0; q<CLUSTER_SIZE;q++){   //COPIA 1 CLUSTER
+                bufferaux[q]=buffer[pontBuffer];
+                pontBuffer++;
+            }
+            bufferaux[q]=NULL;
+
+        //************ESCREVE NO DISCO***********
+            if(i<numClusters-1)
+                escreveCluster(4, bufferaux, setorCluster+(4*i));
+
+            else{
+                numSetores=numSetores%4;
+                if(numSetores==0)
+                    numSetores=4;
+
+                escreveCluster(numSetores, bufferaux, setorCluster+(4*i));
+            }
+        }
+    }
+
+    else{
+        printf("\nCABE EM UM CLUTER APENAS\n");
+        numSetores=size/SECTOR_SIZE;            //CONTA NUMERO DE SETORES
+        
+            if(size%SECTOR_SIZE != 0)
+                numSetores++;
+
+        escreveCluster(numSetores, buffer, setorCluster);
+
+    }
+    
+}
+
+int escreveCluster(int numSetores, char *buffer, unsigned int setorCluster){
+        int CLUSTER_SIZE=1024;
+        unsigned int pontBuffer=0;
+        int q=0, i,tl;
+        unsigned char bufferaux[SECTOR_SIZE], leitura[SECTOR_SIZE];
+                
+
+        for(q=0;q<numSetores;q++){          //VARRE SETOR A SETOR
+            
+            pontBuffer=q*(SECTOR_SIZE-1);
+
+            for(i=0; i<SECTOR_SIZE-1||buffer[pontBuffer]==NULL; i++){       //COPIA 1 SETOR PARA ESCREVER
+                bufferaux[i]=buffer[pontBuffer];
+                pontBuffer++;           
+            }
+
+            bufferaux[i]=NULL;
+
+            write_sector(setorCluster+q, bufferaux);
+
+            
+            strcpy(bufferaux,"");           
+        }               
+}
 
 int identify2 (char *name, int size){
 	  strcpy(name, "Geronimo Veit\t260004\nJulia Rittmann\t262512\nVilmar Fonseca\t262519\n");
