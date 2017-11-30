@@ -259,7 +259,7 @@ void getType(char *name){
 
 	else if(name != NULL && sizeOfPath !=0){
 		printf("is relative\n\n");
-		handleRel(name);
+		//handleRel(name); //Pending.
 	}
 	else
 		printf("\n\n->->Given name is NULL\n\n");
@@ -273,10 +273,8 @@ int write_FAT(){
 		currentSectorPosition = 0;
 		while(currentSectorPosition < SECTOR_SIZE){
 			i = currentSectorPosition;
+			//memcpy(FATbuffer[currentElement], FATarray_global[i], 4);
 			FATbuffer[currentElement] = FATarray_global[i];//(FATarray_global[i++]/256)-(FATarray_global[i++]/65536))
-			FATbuffer[currentElement] = FATarray_global[i+1]/256;
-			FATbuffer[currentElement] = FATarray_global[i+2]/65536;
-			FATbuffer[currentElement] = FATarray_global[i+3]/16777216;
 			currentElement++;
 			currentSectorPosition++;
 		}
@@ -326,9 +324,14 @@ FILE2 create2(char *filename){
 	struct t2fs_record record;
 
  	int free_entry = getFreeEntry();
-	FATarray_global[free_entry] = 0xffffffff;
+	FATarray_global[free_entry] = 0xaaaaaaaa;
 
-	/*
+	for(int cont=0; cont<8192; cont++){
+		printf("*%.4x[%.4x]*\t", FATarray_global[cont], cont);
+	}
+
+	/*Missing filename parse.
+	
 	completeFileName(filename);
 	getType(filename);	
 	record.TypeVal = TYPEVAL_REGULAR;
